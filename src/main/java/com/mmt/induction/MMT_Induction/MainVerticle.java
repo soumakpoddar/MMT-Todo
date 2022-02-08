@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.mmt.induction.MMT_Induction.APIS.API;
+import com.mmt.induction.MMT_Induction.APIS.DataConstants;
 import com.mmt.induction.MMT_Induction.DAO.MySql;
 import com.mmt.induction.MMT_Induction.models.appModel;
 import generator.OpenApiRoutePublisher;
@@ -19,7 +19,6 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.healthchecks.Status;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -36,8 +35,8 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 public class MainVerticle extends AbstractVerticle {
 
   public static final String APPLICATION_JSON = "application/json";
-  private static final int PORT = API.PORT;
-  private static final String HOST = API.HOST;
+  private static final int PORT = DataConstants.PORT;
+  private static final String HOST = DataConstants.HOST;
   private HttpServer server;
   private EndPoints endPoints;
   private static final Logger log = LoggerFactory.getLogger(MainVerticle.class);
@@ -92,11 +91,11 @@ public class MainVerticle extends AbstractVerticle {
     router.route().failureHandler(ErrorHandler.create(vertx,true));
 
     // Routing section...
-    router.get(API.getApi).handler(endPoints::fetchAllTodos);
-    router.get(API.getCheckApi).handler(endPoints::showUpdateForm);
-    router.post(API.getCheckApi).handler(endPoints::checkTodos);
-    router.delete(API.getDeleteApi).handler(endPoints::deleteTodos);
-    router.put(API.getInsertApi).handler(endPoints::addTodo);
+    router.get(DataConstants.getApi).handler(endPoints::fetchAllTodos);
+    router.get(DataConstants.getCheckApi).handler(endPoints::showUpdateForm);
+    router.post(DataConstants.getCheckApi).handler(endPoints::checkTodos);
+    router.delete(DataConstants.getDeleteApi).handler(endPoints::deleteTodos);
+    router.put(DataConstants.getInsertApi).handler(endPoints::addTodo);
 
 //    for(Route r : router.getRoutes()) {
 //      Field f = r.getClass().getDeclaredField("methods");

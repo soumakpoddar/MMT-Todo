@@ -1,6 +1,6 @@
 package com.mmt.induction.MMT_Induction;
 
-import com.mmt.induction.MMT_Induction.APIS.API;
+import com.mmt.induction.MMT_Induction.APIS.DataConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -79,7 +79,7 @@ public class EndPoints {
   {
     fetchReceiver();
 
-    vertx.eventBus().<JsonArray>request(API.getAddress, API.getQuery, reply -> {
+    vertx.eventBus().<JsonArray>request(DataConstants.getAddress, DataConstants.getQuery, reply -> {
       if(reply.succeeded()) {
         context.response().setStatusCode(200).end(reply.result().body().encodePrettily());
       }
@@ -93,7 +93,7 @@ public class EndPoints {
   void fetchReceiver() {
     JsonArray data = new JsonArray();
 
-    vertx.eventBus().<String>consumer(API.getAddress,message -> {
+    vertx.eventBus().<String>consumer(DataConstants.getAddress, message -> {
 
       vertx.executeBlocking(future -> {
         Stage.SessionFactory sessionFactory = emf.unwrap(Stage.SessionFactory.class);
@@ -144,7 +144,7 @@ public class EndPoints {
           log.info("result returned");
           message.reply(asyncResult.result());
         } else {
-          log.error("Request response failed for " + API.getAddress + " : " + asyncResult.cause());
+          log.error("Request response failed for " + DataConstants.getAddress + " : " + asyncResult.cause());
           try {
             Throwable exception = asyncResult.cause();
             if (exception != null) {
@@ -273,7 +273,7 @@ public class EndPoints {
 
       vertx.executeBlocking(promise -> {
         Stage.SessionFactory sessionFactory2 = emf.unwrap(Stage.SessionFactory.class);
-        String q = API.todoIDQuery;
+        String q = DataConstants.todoIDQuery;
 
         try {
           sessionFactory2.withSession(
@@ -349,7 +349,7 @@ public class EndPoints {
 
       vertx.executeBlocking(promise -> {
         Stage.SessionFactory sessionFactory = emf.unwrap(Stage.SessionFactory.class);
-        String q = API.allTodoIDQuery;
+        String q = DataConstants.allTodoIDQuery;
 
         try {
           sessionFactory.withSession(

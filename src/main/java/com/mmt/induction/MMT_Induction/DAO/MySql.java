@@ -1,6 +1,6 @@
 package com.mmt.induction.MMT_Induction.DAO;
 
-import com.mmt.induction.MMT_Induction.APIS.API;
+import com.mmt.induction.MMT_Induction.APIS.DataConstants;
 import com.mmt.induction.MMT_Induction.annotations.*;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -9,8 +9,6 @@ import io.vertx.mysqlclient.MySQLConnectOptions;
 import io.vertx.mysqlclient.MySQLPool;
 import io.vertx.sqlclient.PoolOptions;
 import javax.inject.Inject;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 
 public class MySql extends AbstractVerticle {
   private static String host;
@@ -37,7 +35,7 @@ public class MySql extends AbstractVerticle {
       .setPassword(password);
 
     var poolOptions = new PoolOptions()
-      .setMaxSize(API.instances);
+      .setMaxSize(DataConstants.instances);
 
     var vertx = Vertx.vertx();
 
@@ -72,7 +70,7 @@ public class MySql extends AbstractVerticle {
       startPromise.fail("Cannot connect");
     }
     else {
-      vertx.eventBus().publish(API.mySqlAddress , db);
+      vertx.eventBus().publish(DataConstants.mySqlAddress , db);
       startPromise.complete();
     }
   }

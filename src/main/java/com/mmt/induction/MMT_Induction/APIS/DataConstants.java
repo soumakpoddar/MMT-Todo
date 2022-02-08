@@ -2,7 +2,7 @@ package com.mmt.induction.MMT_Induction.APIS;
 
 import io.vertx.ext.web.Router;
 
-public class API {
+public class DataConstants {
 
   //setting no of instances...
   public static int instances = Runtime.getRuntime().availableProcessors();
