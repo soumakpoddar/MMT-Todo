@@ -13,6 +13,9 @@ public class DataConstants {
   //host and port...
   public static String HOST = "localhost";
   public static int PORT = 8888;
+  public static int AerospikePort = 3000;
+  public static int MySQLPort = 3306;
+  public static int KafkaPort = 9092;
 
   //eventbus address constants...
   public static String getAddress = "get";
