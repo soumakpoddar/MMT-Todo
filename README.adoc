@@ -28,4 +28,5 @@ To run your application:
 * https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
 * https://gitter.im/eclipse-vertx/vertx-users[Vert.x Gitter]
 
-
+== Swagger Endpoint -
+Swagger URL - http://localhost:8888/doc/index.html
