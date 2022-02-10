@@ -4,6 +4,9 @@ import io.vertx.ext.web.Router;
 
 public class DataConstants {
 
+  //cache...
+  public static int expireTime = 1800;
+
   //setting no of instances...
   public static int instances = Runtime.getRuntime().availableProcessors();
 

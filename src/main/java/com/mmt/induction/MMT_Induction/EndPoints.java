@@ -1,6 +1,8 @@
 package com.mmt.induction.MMT_Induction;
 
+import com.aerospike.client.AerospikeClient;
 import com.mmt.induction.MMT_Induction.APIS.DataConstants;
+import com.mmt.induction.MMT_Induction.DAO.AerospikeDAO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -28,6 +30,7 @@ public class EndPoints {
   private final Logger log = LoggerFactory.getLogger(EndPoints.class);
   Vertx vertx = Vertx.vertx();
   EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+  AerospikeClient client = AerospikeDAO.getConnection();
 
   // /todos -> get all todos...
   @Operation(summary = "Find all Todos", method = "GET", operationId = "todos",
@@ -92,72 +95,84 @@ public class EndPoints {
 
   void fetchReceiver() {
     JsonArray data = new JsonArray();
+    int chk = 0;
 
     vertx.eventBus().<String>consumer(DataConstants.getAddress, message -> {
 
-      vertx.executeBlocking(future -> {
-        Stage.SessionFactory sessionFactory = emf.unwrap(Stage.SessionFactory.class);
-        data.clear();
-        String q = message.body();
+      //get data from cache first....
+      JsonArray arr = AerospikeDAO.getTodoFromCache();
 
-        try {
-          sessionFactory.withTransaction((session,tx) ->
-              session
-                .createQuery(q,Object[].class)
-                .getResultList()
-                .thenAccept(todos ->
-                  todos.forEach(todo -> {
-                    JsonObject obj = new JsonObject();
-                    obj.put("name",todo[1]);
-                    obj.put("checked",todo[2]);
+      if(arr != null) {
+        log.info("Data found in cache");
+        message.reply(arr);
+      } else {
+        //else fetch from db...
+        vertx.executeBlocking(future -> {
+          Stage.SessionFactory sessionFactory = emf.unwrap(Stage.SessionFactory.class);
+          data.clear();
+          String q = message.body();
 
-                    JsonArray d = new JsonArray();
-                    session.createQuery("select name from Todo where parent_id="+todo[0])
-                      .getResultList()
-                      .thenAccept(names ->
-                        names.forEach(name -> {
-                          d.add(new JsonObject().put("name", name));
-                          log.info("Sub Todos returned");
-                        })
-                      );
-
-                    obj.put("subTodos",d);
-
-                    if(todo[3]!=null && todo[4]!=null) {
-                      obj.put("checked_date",todo[3]);
-                      obj.put("checked_time",todo[4]);
-                    }
-
-                    data.add(obj);
-                  })
-                )
-            )
-            .toCompletableFuture().join();
-
-          future.complete(data);
-
-        } catch (Exception e) {
-          log.error("Error is {}", e);
-        }
-      }, false, asyncResult -> {
-        if (asyncResult.succeeded()) {
-          log.info("result returned");
-          message.reply(asyncResult.result());
-        } else {
-          log.error("Request response failed for " + DataConstants.getAddress + " : " + asyncResult.cause());
           try {
-            Throwable exception = asyncResult.cause();
-            if (exception != null) {
-              message.fail(500, exception.getMessage());
-            } else {
-              message.fail(500, asyncResult.cause().getMessage());
-            }
+            sessionFactory.withTransaction((session, tx) ->
+                session
+                  .createQuery(q, Object[].class)
+                  .getResultList()
+                  .thenAccept(todos ->
+                    todos.forEach(todo -> {
+                      JsonObject obj = new JsonObject();
+                      obj.put("name", todo[1]);
+                      obj.put("checked", todo[2]);
+
+                      JsonArray d = new JsonArray();
+                      session.createQuery("select name from Todo where parent_id=" + todo[0])
+                        .getResultList()
+                        .thenAccept(names ->
+                          names.forEach(name -> {
+                            d.add(new JsonObject().put("name", name));
+                            log.info("Sub Todos returned");
+                          })
+                        );
+
+                      obj.put("subTodos", d);
+
+                      if (todo[3] != null && todo[4] != null) {
+                        obj.put("checked_date", todo[3]);
+                        obj.put("checked_time", todo[4]);
+                      }
+
+                      data.add(obj);
+                    })
+                  )
+              )
+              .toCompletableFuture().join();
+
+            //insert into cache as data not present...
+            AerospikeDAO.writeTodos(data);
+            future.complete(data);
+
           } catch (Exception e) {
-            log.error("Coreverticle execute-blocking exception ", e);
-            message.fail(500, "Coreverticle execute-blocking failed");
+            log.error("Error is {}", e);
           }
-        }
-      });
+        }, false, asyncResult -> {
+          if (asyncResult.succeeded()) {
+            log.info("result returned");
+            message.reply(asyncResult.result());
+          } else {
+            log.error("Request response failed for " + DataConstants.getAddress + " : " + asyncResult.cause());
+            try {
+              Throwable exception = asyncResult.cause();
+              if (exception != null) {
+                message.fail(500, exception.getMessage());
+              } else {
+                message.fail(500, asyncResult.cause().getMessage());
+              }
+            } catch (Exception e) {
+              log.error("Coreverticle execute-blocking exception ", e);
+              message.fail(500, "Coreverticle execute-blocking failed");
+            }
+          }
+        });
+      }
     });
   }
 
@@ -261,6 +276,8 @@ public class EndPoints {
           })))
         .toCompletableFuture().join();
 
+      //clear cache...
+      AerospikeDAO.clearCache();
       log.info("Updated Successfully...");
     } catch (Exception e) {
       log.error("Error from checkTodo ",e);
@@ -380,6 +397,9 @@ public class EndPoints {
           .thenAccept(todo -> session.remove(todo))
       ).toCompletableFuture().join();
 
+      //clear the cache...
+      AerospikeDAO.clearCache();
+
       log.info("Todo with id: " + id + " deleted successfully...");
     } catch (Exception e) {
       log.error("Error from Delete ", e);
@@ -462,6 +482,9 @@ public class EndPoints {
       sessionFactory4.withTransaction((session,tx) ->
         session.persist(t)
       ).toCompletableFuture().join();
+
+      //clear data in cache...
+      AerospikeDAO.clearCache();
 
       log.info("Data inserted successfully");
       context.response().end("Data inserted successfully");
