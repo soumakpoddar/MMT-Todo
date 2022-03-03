@@ -4,6 +4,9 @@ image:https://img.shields.io/badge/vert.x-4.2.3-purple.svg[link="https://vertx.i
 
 This application was generated using http://start.vertx.io
 
+== Swagger Endpoint -
+Swagger URL - http://localhost:8888/doc/index.html
+
 == Building
 
 To launch your tests:
@@ -27,6 +30,3 @@ To run your application:
 * https://stackoverflow.com/questions/tagged/vert.x?sort=newest&pageSize=15[Vert.x Stack Overflow]
 * https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
 * https://gitter.im/eclipse-vertx/vertx-users[Vert.x Gitter]
-
-== Swagger Endpoint -
-Swagger URL - http://localhost:8888/doc/index.html
